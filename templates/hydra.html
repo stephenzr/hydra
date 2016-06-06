@@ -36,7 +36,41 @@
             currentDimension = dimensionData['data'];
             console.log("setting current dimeion to " + currentDimension);
             $("#dimensions option[value='" + currentDimension + "']").prop('selected', true);
+            searchButtonEl = $('#search-button');
+            searchButtonEl.click( onSearch )
+
         });
+
+        function onSearch() {
+            var term = document.getElementById('search-text').value;
+            var hits = new Array();
+            for ( var nodeId in currentNodes ) {
+                var node = currentNodes[nodeId];
+                if ( node['label'].includes(term)) {
+                    hits.push( node );
+                }
+            }
+            console.log(hits);
+            colorSearchHits(hits);
+            draw_graph();
+        }
+
+        function colorSearchHits(nodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                node.color = 'rgb(255,168,7)';
+                var connectedNodes = network.getConnectedNodes(selectedNode);
+                var allConnectedNodes = [];
+                if (connectedNodes) {
+                    for (var i = 0; i < connectedNodes.length; i++) {
+                        allConnectedNodes = allConnectedNodes.concat(network.getConnectedNodes(connectedNodes[i]))
+                    }
+                }
+            console.log()
+            }
+
+        }
+
     </script>
 
   <script type="text/javascript">
@@ -68,30 +102,21 @@
 
         var options = currentOptions;
 
-        if (currentNodes.length < 50) {
-            options['physics'] = {
-                "barnesHut": {
-                    "springLength": 150,
-                    "avoidOverlap": 1
-                },
-                "minVelocity": 0.75
-            }
-       }
-
         console.log(options);
 
-        for (var i = 0; i < currentNodes.length; i++) {
-            nodes.push(currentNodes[i]);
+        for (var nodeId in currentNodes) {
+            nodes.push(currentNodes[nodeId]);
         }
 
-        for (var i = 0; i < currentEdges.length; i++) {
-            var fromId = currentEdges[i]['from']['id']
-            var toId = currentEdges[i]['to']['id']
+        for (var edgeId in currentEdges) {
+            var edge = currentEdges[edgeId];
+            var fromId = edge['from']['id']
+            var toId = edge['to']['id']
 
             if (fromId == toId) {
-                node = currentEdges[i]['from']
+                node = edge['from']
                 label = node['label']
-                label += " (" + currentEdges[i]['count'] + ")"
+                label += " (" + edge['count'] + ")"
                 node['label'] = label
             }
             else {
@@ -99,7 +124,7 @@
                     from: fromId,
                     to: toId,
                     arrows: 'middle',
-                    label: currentEdges[i]['count']
+                    label: edge['count']
                 });
             }
         }
@@ -117,11 +142,16 @@
 </head>
 
 <body onload="draw();">
-<select id="dimensions" name="dimensions" class="dimensions">
-    {% for d in dimensions %}
-        <option value="{{ d }}">{{ d }}</option>
-    {% endfor %}
-</select>
+<div id="controls">
+    <select id="dimensions" name="dimensions" class="dimensions">
+        {% for d in dimensions %}
+            <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+    </select>
+    <input type="search" id="search-text" title="Search" style="width: 250px;border:  1px solid #ccc;font-size: 14px;"
+         placeholder="type in here to search">
+    <button name="search-button" id="search-button" style="width:30px;height:31px;padding:2px;">Go!</button>
+</div>
 
 <script>
 $('.dimensions').on('change', function() {

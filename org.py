@@ -1,5 +1,5 @@
 import sys
-from visoptions import BigGraphOptions
+from visoptions import BigGraphOptions, HeirarchyNoPhysics, LegalEntityOptions
 
 __author__ = 'lyle'
 
@@ -10,19 +10,24 @@ class OrgGraph:
 
     properties = ('EMPLOYEE','LOCATION','SBU','TITLE','MANAGER','FIRST_NAME','LAST_NAME','LEGAL_ENTITY',
                    'DEPARTMENT','PRODUCT_DESCRIPTION','COMPANY','EMAIL','NETWORK_LOGIN','STATUS','DEVELOPER_FLAG',
-                   'ONBOARDING_DATE','ACCOUNT_STRING','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
-                   'DISCRETIONARY_TITLE','DIVISION','COMPUTER_NO','BUSINESS_UNIT')
+                   'ONBOARDING_DATE','ACCOUNT','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
+                   'DISCRETIONARY_TITLE','DIVISION','TECH_INFO','BUSINESS_UNIT')
 
     dimensions =  ('EMPLOYEE','LOCATION','SBU','TITLE','MANAGER','LEGAL_ENTITY',
                    'DEPARTMENT','PRODUCT_DESCRIPTION','COMPANY','NETWORK_LOGIN','STATUS','DEVELOPER_FLAG',
-                   'ONBOARDING_DATE','ACCOUNT_STRING','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
+                   'ONBOARDING_DATE','ACCOUNT','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
                    'DISCRETIONARY_TITLE','DIVISION','BUSINESS_UNIT')
 
-    options    = { 'DEPARTMENT' : BigGraphOptions() }
+    options    = { 'DEPARTMENT' :  BigGraphOptions(),
+                   'DIVISION':     HeirarchyNoPhysics(),
+                   'LOCATION':     HeirarchyNoPhysics(),
+                   'LEGAL_ENTITY': LegalEntityOptions()}
 
-    def get_options(self, dimension):
-        if not OrgGraph.options.has_key( dimension):
-            return BigGraphOptions().options
+    def get_options(self, dimension, num_nodes, num_edges):
+        if OrgGraph.options.has_key( dimension):
+            return OrgGraph.options[dimension].options
+        if num_nodes < 50:
+            return HeirarchyNoPhysics().options
         return BigGraphOptions().options
 
     def get_default_options(self):
@@ -36,6 +41,9 @@ class OrgGraph:
 
     def get_default_dimension(self):
         return 'DIVISION'
+
+    def get_division_options(self):
+        return OrgGraph.options['DIVISION'].options
 
     def get_division_nodes(self):
         return self.nodes['DIVISION']

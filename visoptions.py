@@ -1,5 +1,30 @@
 
 
+
+class HeirarchyNoPhysics:
+    def __init__(self):
+        self.options = {
+            'layout': {
+                'hierarchical': {
+                    'direction': "LR",
+                    'sortMethod': "directed",
+                    'nodeSpacing' : 165,
+                }
+            },
+            'interaction': {'dragNodes': True},
+            'physics': {
+                'enabled':False
+            }
+        }
+
+class LegalEntityOptions:
+    def __init__(self):
+        self.options = {
+            'nodes' : {
+                'shape': 'box'
+            }
+        }
+
 class BigGraphOptions:
     def __init__(self):
         self.options = {
@@ -27,10 +52,14 @@ class BigGraphOptions:
                     'type': 'continuous'
                 }
             },
-            'physics': False,
+            'physics': {
+                'enabled':False
+            },
             'interaction': {
                 'tooltipDelay': 200,
                 'hideEdgesOnDrag': True
             }
         }
+
+
 
