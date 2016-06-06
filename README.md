@@ -6,3 +6,4 @@ It is written in Python for the back end (Flask) and Javascript on the front end
 
 At present Hydra just supports reading in a csv file and serving up a web page with a select box for the columns of the csv file (the "dimensions") and a dim with the visjs graph inside of it.
 
+To configure it for your input file, set an environment variable ORG_INPUT to $USER_HOME$/employees.csv for use in the Python interpreter. 
