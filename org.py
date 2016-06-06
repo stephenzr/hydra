@@ -1,4 +1,5 @@
 import sys
+from visoptions import BigGraphOptions
 
 __author__ = 'lyle'
 
@@ -17,6 +18,15 @@ class OrgGraph:
                    'ONBOARDING_DATE','ACCOUNT_STRING','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
                    'DISCRETIONARY_TITLE','DIVISION','BUSINESS_UNIT')
 
+    options    = { 'DEPARTMENT' : BigGraphOptions() }
+
+    def get_options(self, dimension):
+        if not OrgGraph.options.has_key( dimension):
+            return BigGraphOptions().options
+        return BigGraphOptions().options
+
+    def get_default_options(self):
+        return BigGraphOptions().options
 
     def get_default_nodes(self):
         return self.get_division_nodes()
