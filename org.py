@@ -4,6 +4,7 @@ __author__ = 'lyle'
 
 import csv
 
+
 class OrgGraph:
 
     properties = ('EMPLOYEE','LOCATION','SBU','TITLE','MANAGER','FIRST_NAME','LAST_NAME','LEGAL_ENTITY',
@@ -16,6 +17,15 @@ class OrgGraph:
                    'ONBOARDING_DATE','ACCOUNT_STRING','TELECOMMUTER','OFFBOARDING_DATE','NICKNAME','TEAM',
                    'DISCRETIONARY_TITLE','DIVISION','BUSINESS_UNIT')
 
+
+    def get_default_nodes(self):
+        return self.get_division_nodes()
+
+    def get_default_edges(self):
+        return self.get_division_edges()
+
+    def get_default_dimension(self):
+        return 'DIVISION'
 
     def get_division_nodes(self):
         return self.nodes['DIVISION']

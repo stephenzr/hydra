@@ -11,16 +11,17 @@ def get_dimension():
     dimension = data['dimension']
     nodes = org_chart.get_nodes_for_dimension(dimension)
     edges = org_chart.get_edges_for_dimension(dimension)
-    return jsonify( nodes=nodes.values(), edges=edges.values())
+    return jsonify( nodes=nodes.values(), edges=edges.values(), dimension=dimension)
 
 @app.route('/')
 def default_route():
     dimensions = org_chart.nodes.keys()
-    nodes = org_chart.get_division_nodes().values()
-    edges = org_chart.get_division_edges().values()
+    nodes = org_chart.get_default_nodes().values()
+    edges = org_chart.get_default_edges().values()
 
     return render_template('hydra.html',
                            dimensions=dimensions,
+                           dimension={'data':org_chart.get_default_dimension()},
                            nodes=nodes,
                            edges=edges)
 

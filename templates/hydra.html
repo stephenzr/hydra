@@ -30,12 +30,21 @@
         }
     </style>
 
+    <script>
+        $(document).ready(function() {
+            var dimensionData = {{ dimension| tojson | safe }};
+            currentDimension = dimensionData['data'];
+            console.log("setting current dimeion to " + currentDimension);
+            $("#dimensions option[value='" + currentDimension + "']").prop('selected', true);
+        });
+    </script>
 
   <script type="text/javascript">
     var network = null;
-    var allNodes = null;
-    var activeHighlight = false;
-    var layoutMethod = "directed";
+    var currentDimension = null;
+    var currentNodes = null;
+    var currentEdges = null;
+
 
     function destroy() {
       if (network !== null) {
@@ -45,9 +54,9 @@
     }
 
     function draw() {
-      var org_nodes = {{ nodes | tojson | safe }};
-      var org_edges = {{  edges | tojson | safe }};
-      draw_graph(org_nodes,org_edges);
+      currentNodes = {{ nodes | tojson | safe }};
+      currentEdges = {{  edges | tojson | safe }};
+      draw_graph(currentNodes,currentEdges);
     }
 
     function get_default_options() {
@@ -65,7 +74,7 @@
                     }
                 },
                 font: {
-                    size: 11,
+                    size: 16,
                     face: 'Tahoma'
                 }
             },
@@ -84,16 +93,14 @@
         }
     }
 
-    function draw_graph(org_nodes,org_edges) {
+    function draw_graph() {
 
         nodes = [];
         edges = [];
 
-        node_map = {}
-
         var options = get_default_options();
 
-        if (org_nodes.length < 100) {
+        if (currentNodes.length < 50) {
             options['physics'] = {
                 "barnesHut": {
                     "springLength": 150,
@@ -103,46 +110,20 @@
             }
        }
 
-        if ( org_nodes.length < 500) { //TODO systemitize
-            options = {
-            nodes: {
-                shape: 'dot',
-            },
-            layout: {
-                hierarchical: {
-                    direction: "UD",
-                    nodeSpacing:100
-                }
-            },
-            physics: { enabled:false},
-            interaction: {dragNodes :true},
-            configure: {
-              filter: function (option, path) {
-                  if (path.indexOf('hierarchical') !== -1) {
-                      return true;
-                  }
-                  return false;
-              },
-              showButton:false
-            }
-    };
-        }
-
         console.log(options);
 
-        for (var i = 0; i < org_nodes.length; i++) {
-            nodes.push(org_nodes[i]);
-            node_map[org_nodes[i]['id']] = org_nodes[i];
+        for (var i = 0; i < currentNodes.length; i++) {
+            nodes.push(currentNodes[i]);
         }
 
-        for (var i = 0; i < org_edges.length; i++) {
-            var fromId = org_edges[i]['from']['id']
-            var toId = org_edges[i]['to']['id']
+        for (var i = 0; i < currentEdges.length; i++) {
+            var fromId = currentEdges[i]['from']['id']
+            var toId = currentEdges[i]['to']['id']
 
             if (fromId == toId) {
-                node = node_map[fromId];
+                node = currentEdges[i]['from']
                 label = node['label']
-                label += " (" + org_edges[i]['count'] + ")"
+                label += " (" + currentEdges[i]['count'] + ")"
                 node['label'] = label
             }
             else {
@@ -150,7 +131,7 @@
                     from: fromId,
                     to: toId,
                     arrows: 'middle',
-                    label: org_edges[i]['count']
+                    label: currentEdges[i]['count']
                 });
             }
         }
@@ -184,9 +165,9 @@ $('.dimensions').on('change', function() {
             url: url,
             data: JSON.stringify({ data: { 'dimension' : dimensionValue } } ),
             success: function (data) {
-                var nodes = data['nodes'];
-                var edges = data['edges'];
-                draw_graph( nodes, edges);
+                currentNodes = data['nodes'];
+                currentEdges = data['edges'];
+                draw_graph();
             },
             dataType: "json"
     });
