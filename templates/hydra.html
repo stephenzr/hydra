@@ -43,31 +43,50 @@
 
         function onSearch() {
             var term = document.getElementById('search-text').value;
-            var hits = new Array();
-            for ( var nodeId in currentNodes ) {
-                var node = currentNodes[nodeId];
-                if ( node['label'].includes(term)) {
-                    hits.push( node );
-                }
-            }
+
+            // search through the node data set for the dimension
+            var hits = nodeDataSet.get({
+              filter: function (item) {
+                  if (item.label.includes(term)) return true;
+                  return false;
+              }
+            });
             console.log(hits);
-            colorSearchHits(hits);
-            draw_graph();
+            updateArray = colorSearchHits(hits);
+            console.log("forcing redraw on network");
+            draw_graph(null, null, updateArray);
         }
 
         function colorSearchHits(nodes) {
+            var ids = {};
+            var updateArray=[];
             for (var i = 0; i < nodes.length; i++) {
                 var node = nodes[i];
-                node.color = 'rgb(255,168,7)';
-                var connectedNodes = network.getConnectedNodes(selectedNode);
+                node = nodeDataSet.get(node.id);
+                node.color = '#7BE141';
+                ids[node.id]=node.id;
+                updateArray.push(node);
+/*                var connectedNodes = network.getConnectedNodes(node['id']);
                 var allConnectedNodes = [];
                 if (connectedNodes) {
                     for (var i = 0; i < connectedNodes.length; i++) {
-                        allConnectedNodes = allConnectedNodes.concat(network.getConnectedNodes(connectedNodes[i]))
+                        var cnodeid = connectedNodes[i];
+                        allConnectedNodes = allConnectedNodes.concat(network.getConnectedNodes(cnodeid));
                     }
                 }
-            console.log()
+                if(allConnectedNodes.length > 0){
+                    for( var i = 0; i < allConnectedNodes.length; i++ ) {
+                        var connectedNode = nodeDataSet.get(allConnectedNodes[i]);
+                        if (connectedNode && ids[connectedNode.id] == null ) {
+                            connectedNode.color = '#7BE141';
+                            ids[connectedNode.id] = connectedNode.id
+                            updateArray.push(connectedNode);
+                        }
+                    }
+                }
+                */
             }
+            return updateArray;
 
         }
 
@@ -76,9 +95,9 @@
   <script type="text/javascript">
     var network = null;
     var currentDimension = null;
-    var currentNodes = null;
-    var currentEdges = null;
     var currentOptions = null;
+    var nodeDataSet = null;
+    var edgesDataset = null;
 
 
     function destroy() {
@@ -89,53 +108,65 @@
     }
 
     function draw() {
-      currentNodes = {{ nodes | tojson | safe }};
-      currentEdges = {{  edges | tojson | safe }};
-      currentOptions = {{  options | tojson | safe }}
-      draw_graph();
+      var nodes = {{ nodes | tojson | safe }};
+      var edges = {{  edges | tojson | safe }};
+      var options = {{  options | tojson | safe }};
+      currentOptions = options;
+      draw_graph(nodes, edges, null);
     }
 
-    function draw_graph() {
+    function draw_graph(nodes,edges,updateArray) {
 
-        nodes = [];
-        edges = [];
-
-        var options = currentOptions;
-
-        console.log(options);
-
-        for (var nodeId in currentNodes) {
-            nodes.push(currentNodes[nodeId]);
+        if ( nodes == null && edges == null && updateArray != null )
+        {
+            nodeDataSet.update(updateArray);
         }
-
-        for (var edgeId in currentEdges) {
-            var edge = currentEdges[edgeId];
-            var fromId = edge['from']['id']
-            var toId = edge['to']['id']
-
-            if (fromId == toId) {
-                node = edge['from']
-                label = node['label']
-                label += " (" + edge['count'] + ")"
-                node['label'] = label
+        else {
+            if (nodeDataSet == null) {
+                nodeDataSet = new vis.DataSet();
             }
-            else {
-                edges.push({
-                    from: fromId,
-                    to: toId,
-                    arrows: 'middle',
-                    label: edge['count']
-                });
+
+            for (var nodeName in nodes) {
+                node = nodes[nodeName];
+                if (nodeDataSet.get(node.id) == null) {
+                    nodeDataSet.add(node);
+                }
+            }
+
+            if (edgesDataset == null ) {
+                edgesDataset = new vis.DataSet();
+            }
+
+            for (var edgeId in edges) {
+                var edge = edges[edgeId];
+                if (edgesDataset.get(edge.id) == null ) {
+                    var fromId = edge['from']['id'];
+                    var toId = edge['to']['id'];
+
+                    if (fromId == toId) {
+                        node = edge['from'];
+                        label = node['label'];
+                        label += " (" + edge['count'] + ")";
+                        node['label'] = label;
+                    }
+                    else {
+                        edgesDataset.add({
+                            from: fromId,
+                            to: toId,
+                            arrows: 'middle',
+                            label: edge['count']
+                        });
+                    }
+                }
             }
         }
-
         // create a network
         var container = document.getElementById('mynetwork');
         var data = {
-            nodes: nodes,
-            edges: edges
+            nodes: nodeDataSet,
+            edges: edgesDataset,
         };
-        network = new vis.Network(container, data, options);
+        network = new vis.Network(container, data, currentOptions);
     }
 
   </script>
@@ -157,16 +188,21 @@
 $('.dimensions').on('change', function() {
     var dimensionValue = this.value;
     var url = "/get_dimension";
+    nodeDataSet = null;
+    edgesDataset = null;
+    currentOptions = null;
+
     $.ajax({
             type: "POST",
             contentType: "application/json; charset=utf-8",
             url: url,
             data: JSON.stringify({ data: { 'dimension' : dimensionValue } } ),
             success: function (data) {
-                currentNodes   = data['nodes'];
-                currentEdges   = data['edges'];
-                currentOptions = data['options']
-                draw_graph();
+                var nodes   = data['nodes'];
+                var edges   = data['edges'];
+                var options = data['options'];
+                currentOptions = options;
+                draw_graph(nodes,edges,null);
             },
             dataType: "json"
     });

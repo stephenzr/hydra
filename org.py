@@ -26,7 +26,7 @@ class OrgGraph:
     def get_options(self, dimension, num_nodes, num_edges):
         if OrgGraph.options.has_key( dimension):
             return OrgGraph.options[dimension].options
-        if num_nodes < 50:
+        if num_nodes < 20:
             return HeirarchyNoPhysics().options
         return BigGraphOptions().options
 
@@ -96,16 +96,18 @@ class OrgGraph:
 
         self.nodes = {}
         self.edges = {}
-        ids = {}
+        node_ids = {}
+        edge_ids = {}
         for dimension in OrgGraph.dimensions:
             self.nodes[dimension] = {}
             self.edges[dimension] = {}
-            ids[dimension] = 1
+            node_ids[dimension] = 1
+            edge_ids[dimension] = 1
 
-        self.create_nodes(ids)
-        self.create_edges()
+        self.create_nodes(node_ids)
+        self.create_edges(edge_ids)
 
-    def create_edges(self):
+    def create_edges(self, edge_ids):
         people_nodes = self.nodes['EMPLOYEE']
         manager_index = self.get_property_index_for('MANAGER')
         for eid in self.raw_data.keys():
@@ -117,19 +119,22 @@ class OrgGraph:
             manager = people_nodes[manager_id]
 
             people_edges = self.edges['EMPLOYEE']
-            key = eid + "~" + manager_id
-            people_edges[eid + "~" + manager_id] = {'from': employee, 'to': manager}
+            edge_id = edge_ids['EMPLOYEE']
+            people_edges[edge_id] = {'from': employee, 'to': manager, 'id':edge_id}
+            edge_ids['EMPLOYEE'] +=1
 
             for dimension in OrgGraph.dimensions[1:]:
                 e_dimension = employee[dimension]
                 m_dimension = manager[dimension]
-                dimension_key = e_dimension + "~" + m_dimension
-                if not self.edges[dimension].has_key(dimension_key):
-                    self.edges[dimension][dimension_key] = {'from': self.nodes[dimension][e_dimension],
+                id = edge_ids[dimension]
+                if not self.edges[dimension].has_key(id):
+                    self.edges[dimension][id] = {'from': self.nodes[dimension][e_dimension],
                                                             'to': self.nodes[dimension][m_dimension],
-                                                            'count': 1}
+                                                            'count': 1,
+                                                            'id': id}
+                    edge_ids[dimension] += 1
                 else:
-                    self.edges[dimension][dimension_key]['count'] += 1
+                    self.edges[dimension][id]['count'] += 1
 
     def create_nodes(self, ids):
         for eid in self.raw_data.keys():
